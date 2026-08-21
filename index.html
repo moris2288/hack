@@ -1,151 +1,676 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SYSTEM ALERT</title>
+    <title>⚠️ هشدار امنیتی</title>
     <style>
-        body {
-            background-color: black;
-            color: lime;
-            font-family: 'Courier New', monospace;
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+
+        * {
             margin: 0;
             padding: 0;
-            overflow: hidden;
-            text-align: center;
+            box-sizing: border-box;
         }
-        #matrix {
+
+        body {
+            background: #0a0a0a;
+            color: #00ff41;
+            font-family: 'Orbitron', 'Courier New', monospace;
+            min-height: 100vh;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            user-select: none;
+        }
+
+        /* زمینه ماتریس پیشرفته */
+        #matrixCanvas {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: -1;
-            opacity: 0.3;
+            z-index: 0;
+            opacity: 0.25;
         }
-        #warning {
-            font-size: 1.5rem;
-            margin-top: 20vh;
-            animation: blink 0.5s infinite;
-            color: red;
+
+        /* افکت نویز استاتیک */
+        #staticOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+            background: repeating-linear-gradient(0deg,
+                    rgba(0, 255, 65, 0.03) 0px,
+                    rgba(0, 255, 65, 0.03) 2px,
+                    transparent 2px,
+                    transparent 4px);
+            animation: staticNoise 0.1s infinite alternate;
+        }
+
+        @keyframes staticNoise {
+            0% { opacity: 0.3; transform: translate(0, 0); }
+            100% { opacity: 0.6; transform: translate(-2px, 2px); }
+        }
+
+        /* کانتینر اصلی */
+        .container {
+            position: relative;
+            z-index: 2;
+            max-width: 800px;
+            width: 90%;
+            padding: 40px 30px;
+            background: rgba(0, 0, 0, 0.85);
+            border: 2px solid #00ff41;
+            border-radius: 20px;
+            box-shadow: 0 0 60px rgba(0, 255, 65, 0.15),
+                        0 0 120px rgba(0, 255, 65, 0.05);
+            backdrop-filter: blur(10px);
+            text-align: center;
+        }
+
+        /* هدر هشدار */
+        .alert-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            padding: 10px;
+            background: rgba(255, 0, 0, 0.15);
+            border: 1px solid rgba(255, 0, 0, 0.4);
+            border-radius: 12px;
+            animation: pulseBorder 1.5s infinite;
+        }
+
+        @keyframes pulseBorder {
+            0%, 100% { border-color: rgba(255, 0, 0, 0.4); box-shadow: 0 0 20px rgba(255, 0, 0, 0.1); }
+            50% { border-color: rgba(255, 0, 0, 0.9); box-shadow: 0 0 40px rgba(255, 0, 0, 0.3); }
+        }
+
+        .alert-icon {
+            font-size: 2.5rem;
+            animation: blinkIcon 0.8s infinite;
+        }
+
+        @keyframes blinkIcon {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.2; transform: scale(1.2); }
+        }
+
+        .alert-title {
+            font-size: 1.4rem;
+            font-weight: 900;
+            color: #ff0040;
+            text-shadow: 0 0 20px rgba(255, 0, 64, 0.5);
+            letter-spacing: 2px;
+        }
+
+        .alert-sub {
+            font-size: 0.9rem;
+            color: #ff6666;
+            font-weight: 400;
+            letter-spacing: 1px;
+        }
+
+        /* بخش پیشرفت */
+        .progress-section {
+            margin: 30px 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(0, 255, 65, 0.15);
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid rgba(0, 255, 65, 0.3);
+            margin: 15px 0;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #00ff41, #00ffcc);
+            border-radius: 10px;
+            transition: width 0.15s linear;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.4);
+        }
+
+        .progress-text {
+            font-size: 3rem;
+            font-weight: 900;
+            color: #00ff41;
+            text-shadow: 0 0 30px rgba(0, 255, 65, 0.3);
+            letter-spacing: 4px;
+        }
+
+        /* جزئیات عملیات */
+        .status-details {
+            min-height: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 8px;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(0, 255, 65, 0.03);
+            border-radius: 12px;
+            border-left: 3px solid #00ff41;
+        }
+
+        .status-main {
+            font-size: 1.1rem;
+            color: #00ff88;
+            font-weight: 700;
+        }
+
+        .status-sub {
+            font-size: 0.8rem;
+            color: #66ffaa;
+            opacity: 0.7;
+            font-weight: 400;
+            font-family: 'Courier New', monospace;
+        }
+
+        /* اطلاعات سیستمی */
+        .system-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 12px;
+            border: 1px solid rgba(0, 255, 65, 0.1);
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px;
+            background: rgba(0, 255, 65, 0.03);
+            border-radius: 8px;
+        }
+
+        .info-label {
+            font-size: 0.6rem;
+            color: #66ffaa;
+            opacity: 0.6;
+            letter-spacing: 2px;
             text-transform: uppercase;
         }
-        #progress {
-            font-size: 2rem;
-            margin: 20px 0;
+
+        .info-value {
+            font-size: 0.9rem;
+            color: #00ffcc;
+            font-weight: 700;
+            margin-top: 4px;
+            font-family: 'Courier New', monospace;
         }
-        #details {
-            font-size: 1rem;
-            margin: 10px 0;
-            color: yellow;
+
+        .info-value.danger {
+            color: #ff0040;
+            animation: blinkIcon 1s infinite;
         }
-        #fake-ip {
+
+        /* دکمه‌های کنترلی */
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 25px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            background: transparent;
+            border: 2px solid #00ff41;
+            color: #00ff41;
+            font-family: 'Orbitron', monospace;
             font-size: 0.8rem;
-            color: cyan;
+            font-weight: 700;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            letter-spacing: 2px;
+            text-transform: uppercase;
         }
-        @keyframes blink {
-            0% { opacity: 1; }
-            50% { opacity: 0.3; }
-            100% { opacity: 1; }
+
+        .btn:hover {
+            background: #00ff41;
+            color: #0a0a0a;
+            box-shadow: 0 0 40px rgba(0, 255, 65, 0.3);
+            transform: scale(1.05);
+        }
+
+        .btn-danger {
+            border-color: #ff0040;
+            color: #ff0040;
+        }
+
+        .btn-danger:hover {
+            background: #ff0040;
+            color: #0a0a0a;
+            box-shadow: 0 0 40px rgba(255, 0, 64, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* فوتر */
+        .footer {
+            margin-top: 25px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(0, 255, 65, 0.1);
+            font-size: 0.7rem;
+            color: #66ffaa;
+            opacity: 0.5;
+            letter-spacing: 1px;
+        }
+
+        /* پاسخگو */
+        @media (max-width: 600px) {
+            .container {
+                padding: 25px 15px;
+            }
+            .alert-title {
+                font-size: 1rem;
+            }
+            .progress-text {
+                font-size: 2rem;
+            }
+            .system-info {
+                grid-template-columns: 1fr 1fr;
+                gap: 5px;
+                padding: 10px;
+            }
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            .btn {
+                width: 100%;
+                max-width: 250px;
+            }
+        }
+
+        /* انیمیشن ورود */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .container {
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        /* خطوط اسکنر */
+        .scanner-line {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #00ff41, transparent);
+            z-index: 3;
+            pointer-events: none;
+            animation: scanMove 3s linear infinite;
+            opacity: 0.3;
+        }
+
+        @keyframes scanMove {
+            0% { top: 0; opacity: 0.3; }
+            50% { opacity: 0.8; }
+            100% { top: 100%; opacity: 0.3; }
         }
     </style>
 </head>
 <body>
-    <canvas id="matrix"></canvas>
-    
-    <div id="warning">⚠️ اخطار: افشای اطلاعات تلفن همراه شما</div>
-    <div id="progress">0%</div>
-    <div id="details">در حال اسکن دستگاه...</div>
-    <div id="fake-ip">آدرس سرور: 192.168.1.105:8080</div>
 
+    <!-- کانواس ماتریس -->
+    <canvas id="matrixCanvas"></canvas>
+
+    <!-- افکت نویز -->
+    <div id="staticOverlay"></div>
+
+    <!-- خط اسکنر -->
+    <div class="scanner-line"></div>
+
+    <!-- کانتینر اصلی -->
+    <div class="container">
+        
+        <!-- هدر هشدار -->
+        <div class="alert-header">
+            <span class="alert-icon">🚨</span>
+            <div>
+                <div class="alert-title">⚠️ هشدار امنیتی بحرانی</div>
+                <div class="alert-sub">دستگاه شما در معرض خطر است</div>
+            </div>
+        </div>
+
+        <!-- بخش پیشرفت -->
+        <div class="progress-section">
+            <div class="progress-text" id="progressText">0%</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+
+        <!-- جزئیات عملیات -->
+        <div class="status-details">
+            <div class="status-main" id="statusMain">🔍 در حال اسکن دستگاه...</div>
+            <div class="status-sub" id="statusSub">تجزیه و تحلیل ترافیک شبکه</div>
+        </div>
+
+        <!-- اطلاعات سیستمی -->
+        <div class="system-info">
+            <div class="info-item">
+                <span class="info-label">📡 آدرس IP</span>
+                <span class="info-value" id="ipAddress">192.168.1.105</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">🔗 پورت</span>
+                <span class="info-value" id="portNumber">8080</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">🖥️ سیستم عامل</span>
+                <span class="info-value" id="osInfo">اندروید 14</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">⚠️ تهدیدات شناسایی</span>
+                <span class="info-value danger" id="threatCount">۳</span>
+            </div>
+        </div>
+
+        <!-- دکمه‌های کنترل -->
+        <div class="controls">
+            <button class="btn" id="abortBtn" disabled>⛔ قطع ارتباط</button>
+            <button class="btn btn-danger" id="resetBtn">🔄 راه‌اندازی مجدد</button>
+        </div>
+
+        <div class="footer">
+            🔒 اتصال رمزنگاری شده • v3.2.1 • وضعیت: هشدار
+        </div>
+    </div>
+
+    <!-- صدای آژیر -->
     <audio id="alarmSound" loop>
         <source src="https://sedatoseda.com/wp-content/uploads/Fire-Alarm-Sound-2.mp3" type="audio/mpeg">
     </audio>
 
     <script>
-        // افکت ماتریس (0 و 1های در حال ریزش)
-        const canvas = document.getElementById('matrix');
+        // ============================================================
+        //  1. MATRIX EFFECT (پیشرفته با حروف و نمادهای بیشتر)
+        // ============================================================
+        const canvas = document.getElementById('matrixCanvas');
         const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        
-        const chars = "01";
-        const fontSize = 14;
-        const columns = canvas.width / fontSize;
-        const drops = [];
-        
-        for (let i = 0; i < columns; i++) {
-            drops[i] = 1;
+        let W, H;
+
+        function resizeCanvas() {
+            W = canvas.width = window.innerWidth;
+            H = canvas.height = window.innerHeight;
         }
-        
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // مجموعه کاراکترهای پیچیده‌تر
+        const chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()_+-=[]{}|;:,.<>?/";
+        const fontSize = 16;
+        const columns = Math.floor(W / fontSize);
+        const drops = [];
+
+        for (let i = 0; i < columns; i++) {
+            drops[i] = Math.floor(Math.random() * -20);
+        }
+
         function drawMatrix() {
-            ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            ctx.fillStyle = "#0f0";
-            ctx.font = fontSize + "px monospace";
-            
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.04)';
+            ctx.fillRect(0, 0, W, H);
+
+            ctx.fillStyle = '#00ff41';
+            ctx.font = fontSize + 'px monospace';
+            ctx.shadowColor = '#00ff41';
+            ctx.shadowBlur = 6;
+
             for (let i = 0; i < drops.length; i++) {
                 const text = chars.charAt(Math.floor(Math.random() * chars.length));
-                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
-                
-                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                const x = i * fontSize;
+                const y = drops[i] * fontSize;
+
+                // رنگ‌های متنوع برای جلوه بهتر
+                const brightness = Math.floor(100 + Math.random() * 155);
+                ctx.fillStyle = `rgb(0, ${brightness}, 80)`;
+                ctx.fillText(text, x, y);
+
+                // گاهی یک کاراکتر پررنگ‌تر
+                if (Math.random() < 0.05) {
+                    ctx.fillStyle = '#ffffff';
+                    ctx.shadowBlur = 20;
+                    ctx.fillText(text, x, y);
+                    ctx.shadowBlur = 6;
+                }
+
+                if (y > H && Math.random() > 0.99) {
                     drops[i] = 0;
                 }
                 drops[i]++;
             }
+            requestAnimationFrame(drawMatrix);
         }
-        
-        setInterval(drawMatrix, 50);
+        drawMatrix();
 
-        // شبیه‌سازی پیشرفت هک
-        const progress = document.getElementById('progress');
-        const details = document.getElementById('details');
-        const alaramSound = document.getElementById('alarmSound');
+        // ============================================================
+        //  2. شبیه‌سازی هک با سناریوهای پیشرفته
+        // ============================================================
+        const progressText = document.getElementById('progressText');
+        const progressFill = document.getElementById('progressFill');
+        const statusMain = document.getElementById('statusMain');
+        const statusSub = document.getElementById('statusSub');
+        const alarmSound = document.getElementById('alarmSound');
+        const abortBtn = document.getElementById('abortBtn');
+        const resetBtn = document.getElementById('resetBtn');
+
+        // اطلاعات سیستمی پویا
+        const ipDisplay = document.getElementById('ipAddress');
+        const portDisplay = document.getElementById('portNumber');
+        const osDisplay = document.getElementById('osInfo');
+        const threatDisplay = document.getElementById('threatCount');
+
+        // متغیرهای وضعیت
         let percent = 0;
-        
-        alaramSound.play();
-        
-        const hackInterval = setInterval(() => {
-            percent += 1;
-            progress.textContent = percent + "%";
-            
-            if (percent === 15) {
-                details.textContent = "در حال دور زدن امنیت...";
-            } else if (percent === 30) {
-                details.textContent = "دسترسی به مخاطبین...";
-            } else if (percent === 50) {
-                details.textContent = "دانلود تصاویر شخصی...";
-            } else if (percent === 75) {
-                details.textContent = "آماده‌سازی برای ارسال داده...";
-            } else if (percent === 90) {
-                details.textContent = "پاک‌کردن ردپا...";
-            }
-            
-            if (percent >= 100) {
+        let isHacking = true;
+        let hackInterval = null;
+        let isAborted = false;
+
+        // لیست مراحل با توضیحات
+        const stages = [
+            { main: '🔍 در حال اسکن دستگاه...', sub: 'تجزیه و تحلیل ترافیک شبکه' },
+            { main: '⚡ در حال دور زدن امنیت...', sub: 'شناسایی آسیب‌پذیری‌های سیستم' },
+            { main: '📂 دسترسی به مخاطبین...', sub: 'استخراج اطلاعات تماس' },
+            { main: '🖼️ دانلود تصاویر شخصی...', sub: 'بارگذاری داده‌های محلی' },
+            { main: '📡 آماده‌سازی برای ارسال داده...', sub: 'رمزنگاری و فشرده‌سازی' },
+            { main: '🧹 پاک‌کردن ردپا...', sub: 'حذف لاگ‌ها و مسیرهای دسترسی' },
+            { main: '✅ عملیات تکمیل شد!', sub: 'همه داده‌ها با موفقیت منتقل شدند' }
+        ];
+
+        // متغیرهای تصادفی برای اطلاعات
+        const randomIP = () => `192.168.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`;
+        const randomPort = () => Math.floor(Math.random() * 10000) + 1000;
+        const randomThreat = () => Math.floor(Math.random() * 5) + 1;
+        const osList = ['اندروید 14', 'اندروید 13', 'iOS 17', 'Windows 11', 'Linux Ubuntu', 'macOS Sonoma'];
+
+        function updateSystemInfo() {
+            ipDisplay.textContent = randomIP();
+            portDisplay.textContent = randomPort();
+            osDisplay.textContent = osList[Math.floor(Math.random() * osList.length)];
+            threatDisplay.textContent = randomThreat();
+        }
+
+        // به‌روزرسانی هر ۲ ثانیه برای حس زنده بودن
+        setInterval(updateSystemInfo, 2000);
+
+        // تابع شروع هک
+        function startHack() {
+            if (hackInterval) return;
+            isHacking = true;
+            isAborted = false;
+            percent = 0;
+            abortBtn.disabled = false;
+            resetBtn.disabled = true;
+
+            // پخش صدا
+            alarmSound.play().catch(e => console.log('Audio play blocked'));
+
+            hackInterval = setInterval(() => {
+                if (!isHacking || isAborted) return;
+
+                percent += Math.random() * 1.2 + 0.3;
+                if (percent > 100) percent = 100;
+
+                // به‌روزرسانی نمایش
+                progressText.textContent = Math.floor(percent) + '%';
+                progressFill.style.width = percent + '%';
+
+                // تغییر متن بر اساس درصد
+                const stageIndex = Math.min(
+                    Math.floor((percent / 100) * (stages.length - 1)),
+                    stages.length - 1
+                );
+                statusMain.textContent = stages[stageIndex].main;
+                statusSub.textContent = stages[stageIndex].sub;
+
+                // تغییر رنگ هشدار در درصدهای بحرانی
+                if (percent > 70) {
+                    document.querySelector('.alert-title').style.color = '#ff0040';
+                    document.querySelector('.alert-title').style.textShadow = '0 0 40px rgba(255,0,64,0.8)';
+                }
+
+                // پایان کار
+                if (percent >= 100) {
+                    clearInterval(hackInterval);
+                    hackInterval = null;
+                    abortBtn.disabled = true;
+                    resetBtn.disabled = false;
+                    isHacking = false;
+
+                    // نمایش پیام نهایی
+                    setTimeout(() => {
+                        document.querySelector('.container').innerHTML = `
+                            <div style="text-align: center; padding: 20px 0;">
+                                <div style="font-size: 4rem; margin-bottom: 20px;">😂</div>
+                                <h1 style="color: #ff0040; font-size: 2rem; margin-bottom: 15px; text-shadow: 0 0 30px rgba(255,0,64,0.4);">
+                                    دستگاه شما هک شد!
+                                </h1>
+                                <p style="color: #00ff41; font-size: 1.3rem; margin-bottom: 10px;">
+                                    ولی نگران نباشید... این فقط یک شوخی بود!
+                                </p>
+                                <p style="color: #66ffaa; font-size: 1rem; margin-top: 20px; opacity: 0.7;">
+                                    با احترام، تیم امنیت سایبری
+                                </p>
+                                <button class="btn" onclick="location.reload()" style="margin-top: 30px;">
+                                    🔄 دوباره امتحان کن
+                                </button>
+                            </div>
+                        `;
+                        alarmSound.pause();
+                        // حذف اسکنر و نویز برای تمیزی
+                        document.getElementById('staticOverlay').style.display = 'none';
+                        document.querySelector('.scanner-line').style.display = 'none';
+                    }, 800);
+                }
+            }, 130);
+        }
+
+        // دکمه قطع ارتباط (ابورت)
+        abortBtn.addEventListener('click', () => {
+            if (hackInterval) {
                 clearInterval(hackInterval);
-                setTimeout(() => {
-                    document.body.innerHTML = `
-                        <div style="
-                            background: black;
-                            color: red;
-                            height: 100vh;
-                            display: flex;
-                            flex-direction: column;
-                            justify-content: center;
-                            align-items: center;
-                            font-family: monospace;
-                            text-align: center;
-                        ">
-                            <h1 style="font-size: 2rem; margin-bottom: 20px;">!!!دستگاه شما هک شد</h1>
-                            <p style="font-size: 1.2rem; color: lime;">نگران نباشید... این فقط یک شوخی بود! 😂</p>
-                            <p style="color: white; margin-top: 30px;">ارادتمند مرتضی خان احمدی</p>
-                        </div>
-                    `;
-                    alaramSound.pause();
-                }, 1000);
+                hackInterval = null;
+                isAborted = true;
+                isHacking = false;
+                abortBtn.disabled = true;
+                resetBtn.disabled = false;
+                statusMain.textContent = '⛔ عملیات متوقف شد';
+                statusSub.textContent = 'ارتباط با سرور قطع شد';
+                progressFill.style.background = '#ff0040';
+                alarmSound.pause();
             }
-        }, 150);
+        });
+
+        // دکمه ریست
+        resetBtn.addEventListener('click', () => {
+            // ریست کامل
+            if (hackInterval) {
+                clearInterval(hackInterval);
+                hackInterval = null;
+            }
+            alarmSound.pause();
+            // برگرداندن محتوای اولیه (با حفظ المان‌ها)
+            location.reload();
+        });
+
+        // شروع خودکار
+        setTimeout(startHack, 800);
+
+        // ============================================================
+        //  3. افکت‌های جانبی (نویز و تکان‌های تصادفی)
+        // ============================================================
+        // ایجاد تکان‌های کوچک در متن هشدار برای حس اضطراب
+        setInterval(() => {
+            if (Math.random() > 0.7 && !isAborted) {
+                const header = document.querySelector('.alert-header');
+                const x = (Math.random() - 0.5) * 4;
+                const y = (Math.random() - 0.5) * 4;
+                header.style.transform = `translate(${x}px, ${y}px)`;
+                setTimeout(() => {
+                    header.style.transform = 'translate(0, 0)';
+                }, 80);
+            }
+        }, 300);
+
+        // ============================================================
+        //  4. تغییر تصادفی تهدیدات هر ۳ ثانیه
+        // ============================================================
+        setInterval(() => {
+            if (!isAborted && isHacking) {
+                threatDisplay.textContent = randomThreat();
+                // گاهی تغییر رنگ
+                if (parseInt(threatDisplay.textContent) > 3) {
+                    threatDisplay.style.color = '#ff0040';
+                    threatDisplay.style.animation = 'blinkIcon 0.5s infinite';
+                } else {
+                    threatDisplay.style.color = '#00ffcc';
+                    threatDisplay.style.animation = 'none';
+                }
+            }
+        }, 3000);
+
+        // ============================================================
+        //  5. غیرفعال کردن کلیک راست و انتخاب متن (برای حس واقعی‌تر)
+        // ============================================================
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.addEventListener('selectstart', e => e.preventDefault());
+
+        console.log('%c⚠️ سیستم امنیتی فعال است!', 'color: red; font-size: 20px; font-weight: bold;');
+        console.log('%cاین یک شوخی است! نگران نباشید 😄', 'color: #00ff41; font-size: 14px;');
     </script>
 </body>
 </html>
